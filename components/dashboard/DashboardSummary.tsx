@@ -7,8 +7,7 @@ import {
 } from "lucide-react";
 
 import { formatYen } from "@/lib/currency";
-
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 type DashboardSummaryProps = {
   balance: number;
@@ -21,51 +20,65 @@ export default function DashboardSummary({
   totalIncome,
   totalExpense,
 }: DashboardSummaryProps) {
+  const summaryItems = [
+    {
+      title: "Saldo",
+      value: formatYen(balance),
+      icon: Wallet,
+      iconClassName: "bg-blue-500/10 text-blue-500",
+      valueClassName: "text-foreground",
+    },
+    {
+      title: "Masuk",
+      value: formatYen(totalIncome),
+      icon: ArrowUpRight,
+      iconClassName: "bg-emerald-500/10 text-emerald-500",
+      valueClassName: "text-emerald-500",
+    },
+    {
+      title: "Keluar",
+      value: formatYen(totalExpense),
+      icon: ArrowDownRight,
+      iconClassName: "bg-red-500/10 text-red-500",
+      valueClassName: "text-red-500",
+    },
+  ];
+
   return (
-    <Card className="mt-4 overflow-hidden border shadow-sm">
-      <div className="grid grid-cols-3 divide-x">
-        <div className="flex flex-col items-center justify-center px-3 py-4">
-          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/10">
-            <Wallet className="h-4 w-4 text-blue-600" />
-          </div>
+    <Card className="mt-3 overflow-hidden shadow-sm">
+      <CardContent className="grid grid-cols-3 p-0">
+        {summaryItems.map((item, index) => {
+          const Icon = item.icon;
 
-          <p className="text-xs text-muted-foreground">
-            Saldo
-          </p>
+          return (
+            <div
+              key={item.title}
+              className={`min-w-0 px-2 py-3 text-center sm:px-4 ${
+                index > 0 ? "border-l" : ""
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <div
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${item.iconClassName}`}
+                >
+                  <Icon className="size-3.5" />
+                </div>
 
-          <p className="mt-1 text-lg font-bold">
-            {formatYen(balance)}
-          </p>
-        </div>
+                <span className="truncate text-[11px] font-medium text-muted-foreground sm:text-xs">
+                  {item.title}
+                </span>
+              </div>
 
-        <div className="flex flex-col items-center justify-center px-3 py-4">
-          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10">
-            <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Masuk
-          </p>
-
-          <p className="mt-1 text-lg font-bold text-emerald-600">
-            {formatYen(totalIncome)}
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center justify-center px-3 py-4">
-          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-red-500/10">
-            <ArrowDownRight className="h-4 w-4 text-red-600" />
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Keluar
-          </p>
-
-          <p className="mt-1 text-lg font-bold text-red-600">
-            {formatYen(totalExpense)}
-          </p>
-        </div>
-      </div>
+              <p
+                className={`mt-1.5 truncate text-base font-bold tracking-tight sm:text-lg ${item.valueClassName}`}
+                title={item.value}
+              >
+                {item.value}
+              </p>
+            </div>
+          );
+        })}
+      </CardContent>
     </Card>
   );
 }
