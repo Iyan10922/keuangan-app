@@ -8,10 +8,7 @@ import {
 
 import { formatYen } from "@/lib/currency";
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 type DashboardSummaryProps = {
   balance: number;
@@ -24,64 +21,51 @@ export default function DashboardSummary({
   totalIncome,
   totalExpense,
 }: DashboardSummaryProps) {
-  const items = [
-    {
-      title: "Saldo",
-      value: formatYen(balance),
-      icon: Wallet,
-      color: "text-blue-600",
-      bg: "bg-blue-500/10",
-    },
-    {
-      title: "Pemasukan",
-      value: formatYen(totalIncome),
-      icon: ArrowUpRight,
-      color: "text-emerald-600",
-      bg: "bg-emerald-500/10",
-    },
-    {
-      title: "Pengeluaran",
-      value: formatYen(totalExpense),
-      icon: ArrowDownRight,
-      color: "text-red-600",
-      bg: "bg-red-500/10",
-    },
-  ];
-
   return (
-    <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
-      {items.map((item) => {
-        const Icon = item.icon;
+    <Card className="mt-4 overflow-hidden border shadow-sm">
+      <div className="grid grid-cols-3 divide-x">
+        <div className="flex flex-col items-center justify-center px-3 py-4">
+          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/10">
+            <Wallet className="h-4 w-4 text-blue-600" />
+          </div>
 
-        return (
-          <Card
-            key={item.title}
-            className="border shadow-sm transition hover:shadow-md"
-          >
-            <CardContent className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {item.title}
-                </span>
+          <p className="text-xs text-muted-foreground">
+            Saldo
+          </p>
 
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${item.bg}`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${item.color}`}
-                  />
-                </div>
-              </div>
+          <p className="mt-1 text-lg font-bold">
+            {formatYen(balance)}
+          </p>
+        </div>
 
-              <p
-                className={`truncate text-xl font-bold ${item.color}`}
-              >
-                {item.value}
-              </p>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </section>
+        <div className="flex flex-col items-center justify-center px-3 py-4">
+          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10">
+            <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Masuk
+          </p>
+
+          <p className="mt-1 text-lg font-bold text-emerald-600">
+            {formatYen(totalIncome)}
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center px-3 py-4">
+          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-red-500/10">
+            <ArrowDownRight className="h-4 w-4 text-red-600" />
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Keluar
+          </p>
+
+          <p className="mt-1 text-lg font-bold text-red-600">
+            {formatYen(totalExpense)}
+          </p>
+        </div>
+      </div>
+    </Card>
   );
 }
