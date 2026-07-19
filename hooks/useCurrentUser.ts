@@ -1,48 +1,72 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/client";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRouter } from "next/navigation";
 
-export default function Navbar() {
-  const router = useRouter();
-  const { user, isLoading } = useCurrentUser();
+type UseCurrentUserResult = {
+  user: User | null;
+  isLoading: boolean;
+};
 
-  async function handleLogout() {
-    const supabase = createClient();
+export default function useCurrentUser(): UseCurrentUserResult {
+  const supabase = useMemo(() => createClient(), []);
 
-    const { error } = await supabase.auth.signOut();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    if (error) {
-      alert(error.message);
-      return;
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadCurrentUser() {
+      const {
+        data: { user: currentUser },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (!isActive) {
+        return;
+      }
+
+      if (error) {
+        console.error(
+          "Gagal mengambil data pengguna:",
+          error.message,
+        );
+
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setUser(currentUser);
+      setIsLoading(false);
     }
 
-    router.replace("/login");
-    router.refresh();
-  }
+    void loadCurrentUser();
 
-  return (
-    <nav className="flex items-center justify-between bg-blue-600 p-4 text-white shadow">
-      <h1 className="text-xl font-bold">
-        💰 Manajemen Keuangan
-      </h1>
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!isActive) {
+          return;
+        }
 
-      <div className="flex items-center gap-4">
-        <span className="hidden text-sm md:block">
-          {isLoading
-            ? "Memuat akun..."
-            : `Halo, ${user?.email ?? "Pengguna"}`}
-        </span>
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      },
+    );
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-lg bg-red-500 px-4 py-2 font-semibold hover:bg-red-600"
-        >
-          Logout
-        </button>
-      </div>
-    </nav>
-  );
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  return {
+    user,
+    isLoading,
+  };
 }
