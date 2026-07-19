@@ -3,7 +3,6 @@
 import {
   ArrowDownRight,
   ArrowUpRight,
-  CircleDollarSign,
   Wallet,
 } from "lucide-react";
 
@@ -12,9 +11,6 @@ import { formatYen } from "@/lib/currency";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 type DashboardSummaryProps = {
@@ -28,77 +24,60 @@ export default function DashboardSummary({
   totalIncome,
   totalExpense,
 }: DashboardSummaryProps) {
-  const isPositiveBalance = balance >= 0;
-
-  const summaryItems = [
+  const items = [
     {
       title: "Saldo",
       value: formatYen(balance),
-      description: isPositiveBalance
-        ? "Kondisi keuangan saat ini."
-        : "Pengeluaran lebih besar dari pemasukan.",
       icon: Wallet,
-      iconClassName: isPositiveBalance
-        ? "bg-blue-500/10 text-blue-600"
-        : "bg-red-500/10 text-red-600",
-      valueClassName: isPositiveBalance
-        ? "text-foreground"
-        : "text-red-600",
+      color: "text-blue-600",
+      bg: "bg-blue-500/10",
     },
     {
       title: "Pemasukan",
       value: formatYen(totalIncome),
-      description: "Total pemasukan pada periode ini.",
       icon: ArrowUpRight,
-      iconClassName: "bg-emerald-500/10 text-emerald-600",
-      valueClassName: "text-emerald-600",
+      color: "text-emerald-600",
+      bg: "bg-emerald-500/10",
     },
     {
       title: "Pengeluaran",
       value: formatYen(totalExpense),
-      description: "Total pengeluaran pada periode ini.",
       icon: ArrowDownRight,
-      iconClassName: "bg-red-500/10 text-red-600",
-      valueClassName: "text-red-600",
+      color: "text-red-600",
+      bg: "bg-red-500/10",
     },
   ];
 
   return (
-    <section className="mt-8 grid gap-4 md:grid-cols-3">
-      {summaryItems.map((item) => {
+    <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+      {items.map((item) => {
         const Icon = item.icon;
 
         return (
           <Card
             key={item.title}
-            className="group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="border shadow-sm transition hover:shadow-md"
           >
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
-              <div className="space-y-1">
-                <CardDescription>
+            <CardContent className="p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
                   {item.title}
-                </CardDescription>
+                </span>
 
-                <CardTitle
-                  className={`text-2xl font-bold tracking-tight ${item.valueClassName}`}
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${item.bg}`}
                 >
-                  {item.value}
-                </CardTitle>
+                  <Icon
+                    className={`h-4 w-4 ${item.color}`}
+                  />
+                </div>
               </div>
 
-              <div
-                className={`flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${item.iconClassName}`}
+              <p
+                className={`truncate text-xl font-bold ${item.color}`}
               >
-                <Icon className="size-5" />
-              </div>
-            </CardHeader>
-
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CircleDollarSign className="size-4 shrink-0" />
-
-                <span>{item.description}</span>
-              </div>
+                {item.value}
+              </p>
             </CardContent>
           </Card>
         );
