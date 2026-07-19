@@ -2,32 +2,40 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import {
   createTransaction,
   deleteTransaction as deleteTransactionService,
   getTransactions,
   updateTransaction,
 } from "@/services/transactionService";
+
 import type { Transaction } from "@/types/transaction";
 
 function getCurrentMonth() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-  
-    return `${year}-${month}`;
-  }
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}`;
+}
 
 export default function useDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+
   const [type, setType] = useState<"income" | "expense">("income");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+
   const [search, setSearch] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth);
+
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,42 +44,42 @@ export default function useDashboard() {
       if (!transaction.created_at) {
         return false;
       }
-  
+
       const transactionDate = new Date(transaction.created_at);
-  
+
       if (Number.isNaN(transactionDate.getTime())) {
         return false;
       }
-  
+
       const transactionMonth = `${transactionDate.getFullYear()}-${String(
         transactionDate.getMonth() + 1
       ).padStart(2, "0")}`;
-  
+
       return transactionMonth === selectedMonth;
     });
   }, [transactions, selectedMonth]);
-  
+
   const totalIncome = useMemo(() => {
     return monthlyTransactions
       .filter((transaction) => transaction.type === "income")
       .reduce((total, transaction) => total + transaction.amount, 0);
   }, [monthlyTransactions]);
-  
+
   const totalExpense = useMemo(() => {
     return monthlyTransactions
       .filter((transaction) => transaction.type === "expense")
       .reduce((total, transaction) => total + transaction.amount, 0);
   }, [monthlyTransactions]);
-  
+
   const balance = totalIncome - totalExpense;
-  
+
   const filteredTransactions = useMemo(() => {
     const keyword = search.toLowerCase().trim();
-  
+
     if (!keyword) {
       return monthlyTransactions;
     }
-  
+
     return monthlyTransactions.filter((transaction) => {
       return (
         transaction.category.toLowerCase().includes(keyword) ||
@@ -79,6 +87,79 @@ export default function useDashboard() {
       );
     });
   }, [monthlyTransactions, search]);
+
+  const expenseByCategory = useMemo(() => {
+    const categoryMap = new Map<string, number>();
+
+    monthlyTransactions
+      .filter((transaction) => transaction.type === "expense")
+      .forEach((transaction) => {
+        categoryMap.set(
+          transaction.category,
+          (categoryMap.get(transaction.category) ?? 0) + transaction.amount
+        );
+      });
+
+    return Array.from(categoryMap.entries()).map(([category, amount]) => ({
+      category,
+      amount,
+    }));
+  }, [monthlyTransactions]);
+
+  const totalTransactions = monthlyTransactions.length;
+
+  const averageExpensePerDay = useMemo(() => {
+    const expenses = monthlyTransactions.filter(
+      (transaction) => transaction.type === "expense"
+    );
+
+    if (expenses.length === 0) {
+      return 0;
+    }
+
+    const expenseTotal = expenses.reduce(
+      (total, transaction) => total + transaction.amount,
+      0
+    );
+
+    const uniqueDays = new Set(
+      expenses
+        .filter((transaction) => transaction.created_at)
+        .map((transaction) =>
+          new Date(transaction.created_at).toDateString()
+        )
+    );
+
+    if (uniqueDays.size === 0) {
+      return 0;
+    }
+
+    return Math.round(expenseTotal / uniqueDays.size);
+  }, [monthlyTransactions]);
+
+  const topCategory = useMemo(() => {
+    if (expenseByCategory.length === 0) {
+      return null;
+    }
+
+    return [...expenseByCategory].sort(
+      (a, b) => b.amount - a.amount
+    )[0];
+  }, [expenseByCategory]);
+
+  const biggestExpense = useMemo(() => {
+    const expenses = monthlyTransactions.filter(
+      (transaction) => transaction.type === "expense"
+    );
+
+    if (expenses.length === 0) {
+      return null;
+    }
+
+    return [...expenses].sort(
+      (a, b) => b.amount - a.amount
+    )[0];
+  }, [monthlyTransactions]);
 
   useEffect(() => {
     async function loadTransactions() {
@@ -108,6 +189,10 @@ export default function useDashboard() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     const numericAmount = Number(amount);
 
@@ -167,19 +252,19 @@ export default function useDashboard() {
   }
 
   async function deleteTransaction(id: string) {
-    const confirmDelete = window.confirm(
-      "Yakin ingin menghapus transaksi ini?"
-    );
-
-    if (!confirmDelete) {
+    if (deletingId) {
       return;
     }
 
     try {
+      setDeletingId(id);
+
       await deleteTransactionService(id);
 
       setTransactions((currentTransactions) =>
-        currentTransactions.filter((transaction) => transaction.id !== id)
+        currentTransactions.filter(
+          (transaction) => transaction.id !== id
+        )
       );
 
       if (editingTransaction?.id === id) {
@@ -187,13 +272,24 @@ export default function useDashboard() {
       }
 
       toast.success("Transaksi berhasil dihapus.");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Gagal menghapus transaksi:", error);
-      toast.error("Transaksi gagal dihapus.");
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Transaksi gagal dihapus."
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
   function editTransaction(transaction: Transaction) {
+    if (isSubmitting || deletingId) {
+      return;
+    }
+
     setEditingTransaction(transaction);
     setType(transaction.type);
     setAmount(String(transaction.amount));
@@ -207,33 +303,50 @@ export default function useDashboard() {
   }
 
   function cancelEditing() {
+    if (isSubmitting) {
+      return;
+    }
+
     resetForm();
   }
 
   return {
     transactions,
     filteredTransactions,
+
     type,
     amount,
     category,
     description,
+
     search,
+    selectedMonth,
+
     editingTransaction,
+
     totalIncome,
     totalExpense,
     balance,
+    expenseByCategory,
+    totalTransactions,
+    averageExpensePerDay,
+    topCategory,
+    biggestExpense,
+
     isLoading,
     isSubmitting,
+    deletingId,
+
     setType,
     setAmount,
     setCategory,
     setDescription,
     setSearch,
+    setSelectedMonth,
+
     handleSubmit,
     deleteTransaction,
     editTransaction,
     cancelEditing,
-    selectedMonth,
-    setSelectedMonth,
   };
 }
