@@ -7,6 +7,8 @@ import { formatYen } from "@/lib/currency";
 import TransactionList from "@/components/TransactionList";
 import TransactionForm from "@/components/TransactionForm";
 import { toast } from "sonner";
+import useDashboard from "@/hooks/useDashboard";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import TransactionSearch from "@/components/dashboard/TransactionSearch";
 import {
@@ -24,6 +26,7 @@ export default function DashboardPage() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const dashboard = useDashboard();
   const [search, setSearch] = useState("");
   const [editingTransaction, setEditingTransaction] =
   useState<Transaction | null>(null);
@@ -165,9 +168,7 @@ export default function DashboardPage() {
       <Navbar />
 
       <div className="mx-auto max-w-5xl p-6">
-        <h2 className="text-3xl font-bold text-slate-800">
-          Dashboard Keuangan
-        </h2>
+      <DashboardHeader />
 
         <p className="mt-2 text-slate-500">
           Catat pemasukan dan pengeluaranmu.
