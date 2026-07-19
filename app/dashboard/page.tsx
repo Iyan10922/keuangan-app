@@ -8,6 +8,7 @@ import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import TransactionSearch from "@/components/dashboard/TransactionSearch";
 import useDashboard from "@/hooks/useDashboard";
 import MonthFilter from "@/components/dashboard/MonthFilter";
+import FinanceChart from "@/components/dashboard/FinanceChart";
 
 export default function DashboardPage() {
   const {
@@ -42,11 +43,9 @@ export default function DashboardPage() {
         <DashboardHeader />
 
         <MonthFilter
-  selectedMonth={selectedMonth}
-  onMonthChange={setSelectedMonth}
-/>
-
-        
+           selectedMonth={selectedMonth}
+           onMonthChange={setSelectedMonth}
+       />
 
         <TransactionSearch
           search={search}
@@ -55,6 +54,11 @@ export default function DashboardPage() {
 
         <DashboardSummary
           balance={balance}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+        />
+
+        <FinanceChart
           totalIncome={totalIncome}
           totalExpense={totalExpense}
         />
