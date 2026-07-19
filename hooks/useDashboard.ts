@@ -10,6 +10,14 @@ import {
 } from "@/services/transactionService";
 import type { Transaction } from "@/types/transaction";
 
+function getCurrentMonth() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+  
+    return `${year}-${month}`;
+  }
+
 export default function useDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [type, setType] = useState<"income" | "expense">("income");
@@ -17,39 +25,60 @@ export default function useDashboard() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const monthlyTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      if (!transaction.created_at) {
+        return false;
+      }
+  
+      const transactionDate = new Date(transaction.created_at);
+  
+      if (Number.isNaN(transactionDate.getTime())) {
+        return false;
+      }
+  
+      const transactionMonth = `${transactionDate.getFullYear()}-${String(
+        transactionDate.getMonth() + 1
+      ).padStart(2, "0")}`;
+  
+      return transactionMonth === selectedMonth;
+    });
+  }, [transactions, selectedMonth]);
+  
   const totalIncome = useMemo(() => {
-    return transactions
+    return monthlyTransactions
       .filter((transaction) => transaction.type === "income")
       .reduce((total, transaction) => total + transaction.amount, 0);
-  }, [transactions]);
-
+  }, [monthlyTransactions]);
+  
   const totalExpense = useMemo(() => {
-    return transactions
+    return monthlyTransactions
       .filter((transaction) => transaction.type === "expense")
       .reduce((total, transaction) => total + transaction.amount, 0);
-  }, [transactions]);
-
+  }, [monthlyTransactions]);
+  
   const balance = totalIncome - totalExpense;
-
+  
   const filteredTransactions = useMemo(() => {
     const keyword = search.toLowerCase().trim();
-
+  
     if (!keyword) {
-      return transactions;
+      return monthlyTransactions;
     }
-
-    return transactions.filter((transaction) => {
+  
+    return monthlyTransactions.filter((transaction) => {
       return (
         transaction.category.toLowerCase().includes(keyword) ||
         (transaction.description ?? "").toLowerCase().includes(keyword)
       );
     });
-  }, [transactions, search]);
+  }, [monthlyTransactions, search]);
 
   useEffect(() => {
     async function loadTransactions() {
@@ -204,5 +233,7 @@ export default function useDashboard() {
     deleteTransaction,
     editTransaction,
     cancelEditing,
+    selectedMonth,
+    setSelectedMonth,
   };
 }

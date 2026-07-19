@@ -7,10 +7,12 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import TransactionSearch from "@/components/dashboard/TransactionSearch";
 import useDashboard from "@/hooks/useDashboard";
+import MonthFilter from "@/components/dashboard/MonthFilter";
 
 export default function DashboardPage() {
   const {
     filteredTransactions,
+    selectedMonth,
     type,
     amount,
     category,
@@ -21,6 +23,7 @@ export default function DashboardPage() {
     totalExpense,
     isLoading,
     isSubmitting,
+    setSelectedMonth,
     setType,
     setAmount,
     setCategory,
@@ -37,6 +40,13 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-5xl p-6">
         <DashboardHeader />
+
+        <MonthFilter
+  selectedMonth={selectedMonth}
+  onMonthChange={setSelectedMonth}
+/>
+
+        
 
         <TransactionSearch
           search={search}
